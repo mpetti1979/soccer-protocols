@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Soccer Model Protocol v1.2 — Bot Reference</title>
+<title>Soccer Model Protocol v1.3 — Bot Reference</title>
 <style>
   body { font-family: monospace; font-size: 14px; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #fff; color: #111; line-height: 1.7; }
   h1 { font-size: 18px; border-bottom: 2px solid #111; padding-bottom: 8px; }
@@ -17,6 +17,7 @@
   .rule { background: #fffbe6; border-left: 3px solid #f0c000; padding: 8px 12px; margin: 10px 0; }
   .stop { background: #fff0f0; border-left: 3px solid #cc0000; padding: 8px 12px; margin: 10px 0; }
   .note { background: #f0f8ff; border-left: 3px solid #0066cc; padding: 8px 12px; margin: 10px 0; }
+  .verdict { background: #f0fff0; border-left: 3px solid #00aa00; padding: 8px 12px; margin: 10px 0; }
   ul { margin: 6px 0; padding-left: 20px; }
   li { margin: 3px 0; }
 </style>
@@ -24,23 +25,18 @@
 <body>
 
 <h1>SOCCER MODEL PROTOCOL — BOT REFERENCE PAGE</h1>
-<p><strong>Version:</strong> 1.2 — April 2026<br>
+<p><strong>Version:</strong> 1.3 — April 2026<br>
 <strong>Purpose:</strong> This page is loaded by an automated bot before analyzing screenshots. Apply ALL rules below mechanically when reading AsianOdds and TradeOnSport (TOS) screenshots.</p>
 
-<!-- ============================================================ -->
 <h2>SECTION 1 — DATA SOURCES</h2>
-
-<p><strong>Source A: AsianOdds</strong> — shows Pinnacle odds movement over time + full bookmaker comparison table.<br>
-Extract from AsianOdds:</p>
+<p><strong>Source A: AsianOdds</strong> — shows Pinnacle odds movement over time + full bookmaker comparison table.<br>Extract from AsianOdds:</p>
 <ul>
   <li>Pinnacle current odds: Home / Draw / Away</li>
   <li>Pinnacle odds at each snapshot (time series table)</li>
   <li>All bookmaker odds for comparison</li>
   <li>Outlier detection (see Section 4)</li>
 </ul>
-
-<p><strong>Source B: TradeOnSport (TOS)</strong> — shows money flow parameters.<br>
-Extract from TOS:</p>
+<p><strong>Source B: TradeOnSport (TOS)</strong> — shows money flow parameters.<br>Extract from TOS:</p>
 <ul>
   <li>bookImpDiff (per selection)</li>
   <li>bookDiffToNow (per selection)</li>
@@ -49,21 +45,12 @@ Extract from TOS:</p>
   <li>PinnyPrice vs market</li>
 </ul>
 
-<!-- ============================================================ -->
 <h2>SECTION 2 — CORE VALUE RULE</h2>
-
-<div class="rule">
-  <strong>RULE A:</strong> Pinnacle odds LOWER than market = Pinnacle is hedging = sharp money received = VALUE on that selection.
-</div>
-<div class="rule">
-  <strong>RULE B:</strong> Pinnacle odds HIGHER than market on a selection = Pinnacle is NOT hedging = value in the OPPOSITE selection.
-</div>
-
+<div class="rule"><strong>RULE A:</strong> Pinnacle odds LOWER than market = Pinnacle is hedging = sharp money received = VALUE on that selection.</div>
+<div class="rule"><strong>RULE B:</strong> Pinnacle odds HIGHER than market on a selection = Pinnacle is NOT hedging = value in the OPPOSITE selection.</div>
 <p>This rule applies identically to 1X2 and Over/Under 2.5.</p>
 
-<!-- ============================================================ -->
 <h2>SECTION 3 — TOS PARAMETERS — DEFINITIONS AND READING RULES</h2>
-
 <h3>bookImpDiff</h3>
 <ul>
   <li>Formula: book% − Implied%</li>
@@ -85,47 +72,38 @@ Extract from TOS:</p>
 
 <h3>impDifToNow</h3>
 <ul>
-  <li>Measures how much the bookmaker has already corrected the odds</li>
   <li>= 0 constant → odds not yet corrected → MAXIMUM residual value</li>
   <li>Low and stable → minimal correction → value still present</li>
   <li>Rising → bookmaker correcting → value eroding</li>
   <li>Negative → market pushing back against signal</li>
 </ul>
-<div class="rule"><strong>Best entry condition:</strong> impDifToNow = 0 + bookImpDiff high and stable = odds not yet corrected = ideal entry.</div>
+<div class="rule"><strong>Best entry condition:</strong> impDifToNow = 0 + bookImpDiff high and stable = ideal entry.</div>
 
 <h3>Sel Vol</h3>
 <ul>
   <li>Volume traded on that selection on Betfair exchange</li>
-  <li>Read in combination with: (1) absolute value, (2) timing — right side of chart = recent = more valuable, (3) direction vs odds movement</li>
   <li>Sel Vol rising + odds falling = Back money = signal confirmed</li>
   <li>Sel Vol rising + odds rising = Lay money = signal reversed</li>
 </ul>
 
 <h3>Tot Vol</h3>
 <ul>
-  <li>Total volume on entire market (1X2 = sum of 1+X+2)</li>
-  <li>SAME for all selections — do NOT use to compare between Home/Draw/Away</li>
+  <li>Total volume on entire market — SAME for all selections — do NOT use to compare between Home/Draw/Away</li>
 </ul>
 
 <h3>PinnyPrice</h3>
 <ul>
-  <li>Pinnacle current price on TOS</li>
   <li>PinnyPrice &lt; market = Pinnacle hedging = value on that selection</li>
   <li>PinnyPrice aligned to market = no outlier</li>
 </ul>
 
-<!-- ============================================================ -->
 <h2>SECTION 4 — OUTLIER DETECTION (AsianOdds)</h2>
-
-<p><strong>Definition:</strong> An outlier exists when Pinnacle odds differ significantly from the market consensus.</p>
-
-<p><strong>How to detect from AsianOdds screenshot:</strong></p>
+<p>How to detect:</p>
 <ol>
   <li>Read Pinnacle row: Home / Draw / Away odds</li>
   <li>Compare each value against the average of all other bookmakers</li>
   <li>Calculate gap: (Pinnacle − Market avg) / Market avg × 100 = gap%</li>
 </ol>
-
 <table>
   <tr><th>Gap%</th><th>Outlier strength</th></tr>
   <tr><td>&gt; 5%</td><td>Weak outlier</td></tr>
@@ -133,40 +111,23 @@ Extract from TOS:</p>
   <tr><td>&gt; 15%</td><td>Strong outlier</td></tr>
   <tr><td>&gt; 20%</td><td>Very strong outlier</td></tr>
 </table>
-
-<p><strong>Interpretation:</strong></p>
 <ul>
-  <li>Pinnacle LOWER than market by X% = Pinnacle hedged = sharp money on that selection = VALUE there</li>
-  <li>Pinnacle HIGHER than market by X% = Pinnacle not hedged = value in OPPOSITE selection</li>
+  <li>Pinnacle LOWER than market = Pinnacle hedged = VALUE on that selection</li>
+  <li>Pinnacle HIGHER than market = Pinnacle not hedged = value in OPPOSITE selection</li>
 </ul>
+<div class="note"><strong>Outlier absent:</strong> Pinnacle aligned to market on all three selections = no outlier signal.</div>
 
-<div class="note"><strong>Outlier absent:</strong> When Pinnacle is aligned to market on all three selections simultaneously = no outlier signal.</div>
-
-<p><strong>Example — Progreso vs Peñarol (04/04/2026):</strong></p>
-<ul>
-  <li>Pinnacle Draw: 4.15 vs bet365: 3.50 → Pinnacle much higher on Draw → NOT hedging Draw → value on Home or Away</li>
-  <li>Pinnacle Away: 1.47 vs market ~1.44 → Pinnacle slightly higher → mild signal against Away</li>
-  <li>Conclusion: Pinnacle not hedging Draw or Away → signal toward decisive result (Home or Away win)</li>
-</ul>
-
-<!-- ============================================================ -->
 <h2>SECTION 5 — ODDS MOVEMENT READING (AsianOdds time series)</h2>
-
-<p>Read the snapshot table chronologically: <strong>oldest at bottom, most recent at top.</strong></p>
-
-<p><strong>Direction signals:</strong></p>
+<p>Read snapshot table: <strong>oldest at bottom, most recent at top.</strong></p>
 <ul>
   <li>Home odds rising over time = money on Away/Draw</li>
-  <li>Away odds falling over time = money on Away = sharp signal on Away</li>
+  <li>Away odds falling over time = sharp signal on Away</li>
   <li>Draw odds stable while Home/Away move = indecision on X</li>
 </ul>
+<p><strong>Meaningful movement:</strong> &gt; 0.10 on Pinnacle over full period is significant.<br>
+<strong>Late movement (last 2-3 snapshots):</strong> Weight ×2 — more informative than early movement.</p>
 
-<p><strong>Meaningful movement:</strong> A move of &gt; 0.10 on Pinnacle over the full period is significant.<br>
-<strong>Late movement (last 2-3 snapshots before kickoff):</strong> Weight ×2 — late sharp money is more informative than early movement.</p>
-
-<!-- ============================================================ -->
 <h2>SECTION 6 — SIGNAL QUALITY AND CONVERGENCE</h2>
-
 <p><strong>Four main indicators:</strong></p>
 <ol>
   <li>bookImpDiff (TOS)</li>
@@ -174,7 +135,6 @@ Extract from TOS:</p>
   <li>Sel Vol dominance (TOS)</li>
   <li>bookDiffToNow &gt; +20 (TOS)</li>
 </ol>
-
 <table>
   <tr><th>Convergences</th><th>Quality</th><th>Action</th></tr>
   <tr><td>4/4</td><td>Very strong</td><td>Bet</td></tr>
@@ -182,117 +142,68 @@ Extract from TOS:</p>
   <tr><td>2/4 + AsianOdds coherent</td><td>Moderate</td><td>Reduced stake</td></tr>
   <tr><td>1/4 or divergent</td><td>Noise</td><td>No bet</td></tr>
 </table>
+<div class="note"><strong>When only AsianOdds available (no TOS):</strong> Maximum quality = MODERATE.</div>
 
-<div class="note"><strong>When only AsianOdds is available (no TOS):</strong> Use outlier detection as primary signal + odds movement direction as secondary. Maximum quality without TOS = MODERATE.</div>
-
-<!-- ============================================================ -->
 <h2>SECTION 7 — bookDiffToNow PATTERNS (A–H)</h2>
-
 <h3>PATTERN A — Late explosion</h3>
-<ul>
-  <li>Form: bookDiffToNow starts low or negative, then sharp jump to &gt; +20 in last 2-3 hours before kickoff</li>
-  <li>Interpretation: Massive late sharp money with updated information</li>
-  <li>Reliability: HIGH</li>
-</ul>
+<ul><li>bookDiffToNow starts low/negative, then jumps &gt; +20 in last 2-3 hours. Reliability: HIGH.</li></ul>
 <div class="rule">Rule: bookDiffToNow &gt; +20 late + impDifToNow = 0 → maximum quality signal</div>
 
 <h3>PATTERN B — High and stable all day</h3>
-<ul>
-  <li>Form: Values &gt; +20 constant throughout the day</li>
-  <li>Interpretation: Constant persistent monetary pressure — money entering gradually</li>
-  <li>Reliability: HIGH</li>
-</ul>
-<div class="rule">Rule: bookDiffToNow &gt; +20 stable + impDifToNow low = confirmed constant pressure</div>
+<ul><li>Values &gt; +20 constant throughout day. Reliability: HIGH.</li></ul>
 
 <h3>PATTERN C — Starts high then falls toward 0</h3>
-<ul>
-  <li>Form: Starts +20/+40, progressively falls toward 0 near kickoff</li>
-  <li>Interpretation: Bookmaker reacted and corrected odds, absorbed pressure. Original signal was real.</li>
-  <li>Reliability: MEDIUM-HIGH</li>
-</ul>
-<div class="rule">Rule: Even if bookDiffToNow erodes, respect original signal if bookImpDiff remains positive</div>
+<ul><li>Bookmaker corrected odds. Original signal was real. Reliability: MEDIUM-HIGH.</li></ul>
+<div class="rule">Rule: Respect original signal if bookImpDiff remains positive even if bookDiffToNow erodes.</div>
 
 <h3>PATTERN D — Inverts from positive to negative</h3>
-<ul>
-  <li>Form: Starts positive, becomes negative near kickoff</li>
-  <li>Interpretation: Original signal absorbed and reversed by market. Selection loses force.</li>
-  <li>Reliability: HIGH as stop signal</li>
-</ul>
-<div class="stop">HARD STOP: bookDiffToNow inverts negative → DO NOT BET or exit position. Applies regardless of other signals.</div>
+<ul><li>Original signal absorbed and reversed.</li></ul>
+<div class="stop">HARD STOP: bookDiffToNow inverts negative → DO NOT BET. Applies regardless of all other signals.</div>
 
-<h3>PATTERN E — Stable negative on a selection</h3>
-<ul>
-  <li>Form: Consistent significant negative values</li>
-  <li>Interpretation: Market rejects that selection</li>
-  <li>Use: Exclusion filter only — not a directional signal for opposite</li>
-</ul>
+<h3>PATTERN E — Stable negative</h3>
+<ul><li>Market rejects that selection. Exclusion filter only — not directional signal for opposite.</li></ul>
 
 <h3>PATTERN F — Progressive growth during day</h3>
-<ul>
-  <li>Form: Starts low positive, grows gradually throughout day</li>
-  <li>Interpretation: Distributed accumulation of sharp money</li>
-  <li>Reliability: HIGH</li>
-</ul>
+<ul><li>Distributed accumulation of sharp money. Reliability: HIGH.</li></ul>
 
 <h3>PATTERN G — Inversion from negative to strongly positive</h3>
-<ul>
-  <li>Form: Starts negative, then sharp reversal to very high positive (extreme variant of Pattern A)</li>
-  <li>Examples: Wigan (−15 → +60), Torino (negative → +15 in last hours)</li>
-  <li>Interpretation: Total signal reversal — massive late entry overwrites everything</li>
-  <li>Reliability: VERY HIGH for the late signal</li>
-</ul>
+<ul><li>Total signal reversal — massive late entry overwrites everything. Reliability: VERY HIGH.</li></ul>
 
 <h3>PATTERN H — Draw bookDiffToNow very negative</h3>
-<ul>
-  <li>Form: bookDiffToNow on Draw strongly negative and stable</li>
-  <li>Interpretation: Market does not believe in Draw = match will be decided. Does NOT say who wins.</li>
-  <li>Use: Additional filter to identify winner between the two teams</li>
-</ul>
+<ul><li>Market does not believe in Draw = match will be decided. Does NOT say who wins. Use as exclusion filter for Draw.</li></ul>
 
-<!-- ============================================================ -->
 <h2>SECTION 8 — SPECIAL FILTERS</h2>
-
-<h3>Playoff / aggregate filter (European football)</h3>
-<p>Return legs with aggregate tied or ±1 goal = both teams must attack = O/U signal systematically distorted toward Over.<br>
-<strong>Rule:</strong> Raise convergence threshold to 4/4 before betting Under in these matches.</p>
-
+<h3>Playoff / aggregate filter</h3>
+<p>Return legs with aggregate tied or ±1 goal: raise convergence threshold to 4/4 before betting Under.</p>
 <h3>Lay rule</h3>
-<p>When bookImpDiff positive + Sel Vol dominant converge on non-Home selection (X or 2) → lay of Home team on Betfair covers two scenarios with one bet.</p>
-
+<p>bookImpDiff positive + Sel Vol dominant on non-Home (X or 2) → lay Home on Betfair covers two scenarios.</p>
 <h3>False signal filters — do NOT bet if:</h3>
 <ul>
   <li>Isolated spike on AsianOdds without TOS confirmation</li>
-  <li>bookImpDiff positive but PinnyPrice aligned to market = adjustment only, not outlier</li>
-  <li>bookDiffToNow not positive despite bookImpDiff positive = pressure not confirmed</li>
-  <li>All movement happened in first 2 days with no recent confirmation = stale signal</li>
-  <li>Sel Vol rising + odds rising = verify if Lay before concluding</li>
+  <li>bookImpDiff positive but PinnyPrice aligned to market</li>
+  <li>bookDiffToNow not positive despite bookImpDiff positive</li>
+  <li>All movement in first 2 days with no recent confirmation = stale signal</li>
+  <li>Sel Vol rising + odds rising = verify if Lay</li>
 </ul>
 
-<!-- ============================================================ -->
 <h2>SECTION 9 — H2H HISTORICAL HYPOTHESIS (IN VALIDATION — NOT YET OPERATIONAL)</h2>
-
 <ul>
-  <li>Historical average Home odds &gt; current odds = forecast &gt; market = value hypothesis on Home</li>
-  <li>Historical average Home odds &lt; current odds = forecast &lt; market = value hypothesis on Away/Draw</li>
+  <li>Historical avg Home odds &gt; current odds = value hypothesis on Home</li>
+  <li>Historical avg Home odds &lt; current odds = value hypothesis on Away/Draw</li>
 </ul>
-<div class="note">⚠️ Data collection phase only. Do NOT use as standalone signal until further notice.</div>
+<div class="note">⚠️ Data collection phase only. Do NOT use as standalone signal.</div>
 
-<!-- ============================================================ -->
 <h2>SECTION 10 — PRECEDENCE RULES SUMMARY</h2>
-
 <ol>
   <li>bookImpDiff prevails over bookDiffToNow when they conflict</li>
-  <li>Late movement (last 2-3 hours before kickoff) weighs ×2</li>
+  <li>Late movement (last 2-3 hours) weighs ×2</li>
   <li>AsianOdds outlier &gt; +15% = strong standalone signal even without TOS</li>
   <li>Pattern D (inversion to negative) = hard stop regardless of all other signals</li>
   <li>Pinnacle higher than ALL bookmakers on a selection = very strong signal on opposite</li>
 </ol>
 
-<!-- ============================================================ -->
 <h2>SECTION 11 — OUTPUT FORMAT (BOT RESPONSE IN ITALIAN)</h2>
-
 <p>After analyzing the screenshot(s), respond in Italian with this exact structure:</p>
-
 <pre>
 ⚽ [Home] vs [Away] — [Competizione]
 🗓 [Data] | [Orario se disponibile]
@@ -322,8 +233,54 @@ Extract from TOS:</p>
 📝 Note: [anomalie, filtri applicati, incertezze]
 </pre>
 
+<h2>SECTION 12 — VERDICT FINALE</h2>
+<p>ALWAYS append this block at the very end of every response, after the full analysis. This is mandatory.</p>
+<div class="verdict">
+<strong>The VERDICT block is the final decision summary. It must be clear, actionable, and self-contained.</strong>
+</div>
+<pre>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚽ VERDICT — [Home] vs [Away]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🥇 SEGNALE PRIMARIO: [selezione] @ ~[quota] — [Molto forte / Forte / Moderata]
+🥈 SEGNALE SECONDARIO: [selezione] @ ~[quota] — [qualità] (solo se presente)
+⛔ ESCLUSO: [selezione] — [motivo in una riga] (solo se applicabile)
+
+💰 STAKE: [X.XXu]
+📋 CONFLITTI: [Nessuno / descrizione in una riga]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ GIOCA   /   ⏸ ASPETTA TOS   /   ❌ SKIP
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+</pre>
+
+<p><strong>Rules for filling the VERDICT:</strong></p>
+<ul>
+  <li>If 1X2 and O/U both have signals → show both as Primary and Secondary</li>
+  <li>If TOS and AsianOdds conflict → write CONFLITTI and apply precedence rule (bookImpDiff wins over bookDiffToNow; AsianOdds outlier &gt;15% is strong standalone)</li>
+  <li>If TOS not available → write "ASPETTA TOS" only if match is still hours away and TOS data could change verdict; otherwise proceed with MODERATA quality</li>
+  <li>SKIP only if: convergences 1/4, or Pattern D active, or no outlier and no TOS</li>
+  <li>GIOCA if: convergences 3/4 or 4/4, or strong outlier (&gt;15%) confirmed by movement</li>
+  <li>Stake: 0.50u = Moderata, 1.00u = Forte, 2.00u = Molto forte</li>
+</ul>
+
+<p><strong>Example VERDICT — Heerenveen vs Heracles:</strong></p>
+<pre>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚽ VERDICT — Heerenveen vs Heracles
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🥇 SEGNALE PRIMARIO: Over 2.5 @ ~1.85 — Forte (3/4)
+🥈 SEGNALE SECONDARIO: Home (Heerenveen) @ ~1.49 — Moderata (conflitto TOS/Pinnacle)
+⛔ ESCLUSO: Draw — Pattern H confermato (bookImpDiff -13.65)
+
+💰 STAKE: Over 1.00u | Home 0.50u
+📋 CONFLITTI: Sì — TOS indica Home (bookImpDiff +21) ma Pinnacle hedgia Away (-10%). bookImpDiff prevale su bookDiffToNow negativo.
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ GIOCA Over | ⏸ Home con cautela
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+</pre>
+
 <hr>
-<p><small>Soccer Model Protocol v1.2 — Bot Reference Page — April 2026</small></p>
+<p><small>Soccer Model Protocol v1.3 — Bot Reference Page — April 2026</small></p>
 
 </body>
 </html>
