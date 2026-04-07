@@ -363,3 +363,89 @@ Step 7: Check extreme ranks — verify R² with and without</pre>
 <p><small>Tennis LBA Protocol v2.1 — Bot Reference Page — April 2026</small></p>
 </body>
 </html>
+
+<!-- APPENDED SECTION 13 -->
+<h2>SECTION 13 — PATTERN MORFOLOGIA — CLASSIFICAZIONE PRECISA</h2>
+
+<div class="stop">
+CRITICAL: When classifying morfologia, always show the full Pinnacle FAV price sequence with ALL timestamps extracted from TennisExplorer. Then identify the pattern explicitly.
+</div>
+
+<h3>How to classify morfologia from price sequence</h3>
+<p>Write out the full sequence from oldest to newest: <code>Opening → snap1 → snap2 → ... → current</code></p>
+<p>Then apply this classification logic:</p>
+
+<table>
+  <tr><th>Pattern test</th><th>Code</th><th>Signal</th></tr>
+  <tr><td>Every step goes UP (or mostly up, max 1 small dip)</td><td>S</td><td>PRO UND strong</td></tr>
+  <tr><td>Every step goes DOWN (or mostly down, max 1 small spike)</td><td>D</td><td>EV — check DB</td></tr>
+  <tr><td>Goes down then STOPS and stays flat (cap)</td><td>DC</td><td>PRO UND</td></tr>
+  <tr><td>Goes up then STOPS and stays flat</td><td>SF</td><td>EV</td></tr>
+  <tr><td>Goes up then comes back down (hump shape)</td><td>G</td><td>PRO UND</td></tr>
+  <tr><td>Goes down then comes back up (V shape)</td><td>VD</td><td>EV</td></tr>
+  <tr><td>Flat throughout — no significant movement (&lt;0.03 total)</td><td>P</td><td>EV</td></tr>
+  <tr><td>One sudden jump at a specific time, then flat</td><td>ST</td><td>nd</td></tr>
+</table>
+
+<div class="rule">
+S classification requires: net movement UP of at least +0.05 from opening to current, with predominant upward direction. Small oscillations (±0.01-0.02) within an upward trend do NOT disqualify S classification.
+</div>
+
+<h3>Morfologia output format (mandatory)</h3>
+<pre>
+📈 MORFOLOGIA (sul FAV):
+• Sequenza completa: [opening] → [ts1: val] → [ts2: val] → ... → [current]
+• Movimento netto: +X.XX (+X.X%) da apertura a quota attuale
+• Pattern identificato: [descrizione in una frase: es. "salita quasi continua con piccole oscillazioni"]
+• Tipo: [S / D / DC / SF / G / VD / VR / P / ST]
+• Segnale empirico: [PRO UND / PRO FAV / EV / nd]
+</pre>
+
+<h2>SECTION 14 — ESTRAZIONE TORNEO E GIOCATORI DA TENNISEXPLORER</h2>
+
+<div class="rule">
+TennisExplorer HTML structure for match info:<br>
+- Match title appears as: <strong>Player1 - Player2</strong> in the page title or H1<br>
+- Tournament and round appear immediately below: e.g. "Today, 12:30, Monte Carlo, 1. round, clay"<br>
+- Player nationalities appear as flag images with country codes (e.g. CRO, KAZ)<br>
+- Rankings appear in the stats table: "Singles ranking" column<br><br>
+ALWAYS extract: tournament name, round, surface, date/time, both player full names, both nationalities, both current rankings.
+</div>
+
+<h2>SECTION 15 — RECAP FINALE LEGGIBILE (mandatory after VERDICT)</h2>
+
+<p>After the full technical analysis and VERDICT block, ALWAYS append this short readable summary:</p>
+
+<pre>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📋 RIEPILOGO RAPIDO
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎾 [FAV] vs [UND] — [Torneo] [Round]
+📅 [Data] | [Ora] | [Superficie]
+
+📊 Cosa dice il mercato:
+  Pinnacle FAV: [opening] → [current] ([direzione: sale/scende] [delta])
+  Pattern: [tipo] — [una frase descrittiva in italiano semplice]
+
+🔍 Segnali:
+  Morfologia: [tipo] → [PRO FAV / PRO UND / EV] [spiegazione breve]
+  Outlier FAV: [SI → sharp su UND / nd → nessun segnale]
+  Outlier UND: [SI → sharp su FAV / nd → nessun segnale]
+  Modello: [Δ% e direzione / nd]
+
+🎯 [GIOCA [giocatore] @ [quota] — [Xu] / NO BET]
+[Se NO BET: motivo in una riga]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+</pre>
+
+<p>Rules for RIEPILOGO RAPIDO:</p>
+<ul>
+  <li>Max 15 lines total</li>
+  <li>No technical jargon — write as if explaining to a non-expert</li>
+  <li>Always include the pattern explanation in plain Italian</li>
+  <li>If GIOCA: highlight the bet clearly with emoji</li>
+  <li>If NO BET: one clear sentence explaining why</li>
+</ul>
+
+<hr>
+<p><small>Tennis LBA Protocol v2.1 — updated with morfologia pattern + readable recap — April 2026</small></p>
