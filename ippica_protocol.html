@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Sistema Ippico Trotto v2.4 — Bot Reference</title>
+<style>
+  body { font-family: monospace; font-size: 13px; max-width: 900px; margin: 20px auto; padding: 0 20px; }
+  h2 { border-bottom: 1px solid #ccc; margin-top: 24px; }
+  table { border-collapse: collapse; width: 100%; margin: 8px 0; }
+  td, th { border: 1px solid #aaa; padding: 4px 8px; }
+  th { background: #f0f0f0; }
+  .rule { background: #fffbe6; border-left: 3px solid #f0c000; padding: 6px 10px; margin: 8px 0; }
+  .stop { background: #fff0f0; border-left: 3px solid #cc0000; padding: 6px 10px; margin: 8px 0; }
+  pre { background: #f5f5f5; padding: 8px; }
+</style>
+</head>
+<body>
+<h1>SISTEMA IPPICO TROTTO v2.4 — BOT REFERENCE</h1>
+
+<h2>SECTION 1 — FORMULA SCORE</h2>
+<div class="rule"><strong>Score = Pt.GG + Pt.Q + Log Indice + Pt.XQ</strong></div>
+
+<h2>SECTION 2 — Pt.GG (giorni dall'ultima corsa)</h2>
+<table>
+<tr><th>Giorni</th><th>Pt.GG</th></tr>
+<tr><td>≤14</td><td>+3</td></tr>
+<tr><td>15–21</td><td>+2</td></tr>
+<tr><td>22–35</td><td>+1</td></tr>
+<tr><td>36–60</td><td>−1</td></tr>
+<tr><td>61–90</td><td>−2</td></tr>
+<tr><td>&gt;90</td><td>−3</td></tr>
+</table>
+
+<h2>SECTION 3 — Pt.Q (formula log-log)</h2>
+<pre>Pt.Q = [log10(QF_t1 / (Mp_t1/1000)) − log10(QA_snai / (Mp_oggi/1000))] × 2.5</pre>
+<ul>
+<li>Arrotonda all'intero più vicino prima del cappaggio. Cappa a ±3</li>
+<li>QA_snai = quota vincente Snai oggi (PDF quote, colonna QA)</li>
+<li>QF_t1 = quota vincente (primo numero Q.F.) dell'ultima corsa storica</li>
+<li>Mp_t1 = montepremi ultima corsa storica in euro</li>
+<li>Mp_oggi = montepremi corsa odierna</li>
+<li>Ultima corsa estera → Pt.Q = 0</li>
+</ul>
+
+<h2>SECTION 4 — Log Indice (ultimi 6 mesi)</h2>
+<pre>val = log10[(V* + P*) / C* × (Vincite* / C*)]</pre>
+<ul>
+<li>V*=0 e P*=0 → Log = −3 direttamente</li>
+<li>Fonte: colonne C.* V.* P.* Vincite.* dall'header corsa PDF partenti (6 mesi) — NON usare riga 3m</li>
+</ul>
+<table>
+<tr><th>val</th><th>Pt.Log</th></tr>
+<tr><td>≥3.00</td><td>+3</td></tr>
+<tr><td>≥2.75</td><td>+2</td></tr>
+<tr><td>≥2.25</td><td>+1</td></tr>
+<tr><td>≥1.75</td><td>0</td></tr>
+<tr><td>≥1.25</td><td>−1</td></tr>
+<tr><td>≥0.75</td><td>−2</td></tr>
+<tr><td>&lt;0.75</td><td>−3</td></tr>
+</table>
+
+<h2>SECTION 5 — XQ grezzo e Pt.XQ</h2>
+<pre>XQ grezzo = (100/QP − 100/QV) / 10</pre>
+<ul><li>QP e QV = SEMPRE da screenshot Bet365, MAI da Snai</li></ul>
+<table>
+<tr><th>XQ grezzo</th><th>Pt.XQ</th></tr>
+<tr><td>≥3.50</td><td>+3</td></tr>
+<tr><td>≥2.75</td><td>+2</td></tr>
+<tr><td>≥2.00</td><td>+1</td></tr>
+<tr><td>≥1.25</td><td>0</td></tr>
+<tr><td>≥0.75</td><td>−1</td></tr>
+<tr><td>≥0.25</td><td>−2</td></tr>
+<tr><td>&lt;0.25</td><td>−3</td></tr>
+</table>
+
+<h2>SECTION 6 — FILTRO CORSA OPERATIVA (Fase 1)</h2>
+<div class="rule">Operativa se: Partenti ≥ 8 AND Montepremi ≥ €3.080</div>
+<ul>
+<li>&gt;12 partenti → CONTEST: analisi solo su richiesta esplicita</li>
+<li>CNAZ singolo → operativo a 0.25u</li>
+<li>GENT singolo → operativo a 0.25u</li>
+<li>CNAZ + GENT insieme → operativo solo se score ≥ +7</li>
+</ul>
+
+<h2>SECTION 7 — FILTRO BET365 (Fase 3 — solo top 3 per score)</h2>
+<div class="rule">Candidato operativo: QP in range 1.70–3.50 AND QP &lt; QV</div>
+<ul>
+<li>QP &lt; 1.70 → escludi (Alert Q0), passa al successivo</li>
+<li>QP &gt; 3.50 → escludi (Q5), passa al successivo</li>
+<li>QP &gt; QV → escludi (dato anomalo), passa al successivo</li>
+<li>Se nessuno dei top 3 supera il filtro → NO BET</li>
+</ul>
+
+<h2>SECTION 8 — STAKE</h2>
+<table>
+<tr><th>Condizione</th><th>Stake</th></tr>
+<tr><td>Nessun flag</td><td>0.50u</td></tr>
+<tr><td>CNAZ singolo</td><td>0.25u</td></tr>
+<tr><td>GENT singolo</td><td>0.25u</td></tr>
+<tr><td>CNAZ + GENT, score ≥ +7</td><td>0.25u</td></tr>
+<tr><td>CNAZ + GENT, score &lt; +7</td><td>NO BET</td></tr>
+<tr><td>Nessuno dei top 3 in range</td><td>NO BET</td></tr>
+</table>
+
+<h2>SECTION 9 — MOV</h2>
+<p>Confronta fascia QV_t1 vs fascia QV_oggi E fascia M_t1 vs fascia M_oggi.</p>
+<table>
+<tr><th></th><th>Mp ↑ (fascia sale)</th><th>Mp = (stabile)</th><th>Mp ↓ (fascia scende)</th></tr>
+<tr><td>Quota migliora (fascia QV scende)</td><td>A</td><td>B</td><td>C</td></tr>
+<tr><td>Quota stabile (stessa fascia QV)</td><td>D</td><td>E</td><td>F</td></tr>
+<tr><td>Quota peggiora (fascia QV sale)</td><td>G</td><td>H</td><td>I</td></tr>
+</table>
+<p>Suffisso: + se QA_oggi &lt; QF_t1×0.80 | = se tra 0.80 e 1.20 | − se &gt; QF_t1×1.20</p>
+
+<h2>SECTION 10 — FASCE</h2>
+<p><strong>Fascia QV (da quota vincente):</strong> F=1.50-3.00 | P=3.01-7.00 | S=7.01-15.00 | U=&gt;15.00</p>
+<p><strong>Fascia Montepremi:</strong> M1=&lt;4400 | M2=4400-6600 | M3=6601-9350 | M4=9351-13200 | M5=&gt;13200</p>
+<p><strong>Fascia Q (da QP Bet365):</strong> Q0=&lt;1.70 | Q1=1.70-2.00 | Q2=2.01-2.50 | Q3=2.51-3.00 | Q4=3.01-3.50 | Q5=&gt;3.50</p>
+<p><strong>Fascia XQ:</strong> XQ+3 | XQ+2 | XQ+1 | XQ0 | XQ−1 | XQ−2 | XQ−3</p>
+
+<h2>SECTION 11 — ESITI PRPA</h2>
+<div class="rule">PIAZZATO (P) = arriva 1°, 2° o 3° posto → P/L = (QP × Stake) − Stake<br>
+NON PIAZZATO (NP) = tutto il resto → P/L = −Stake</div>
+
+<h2>SECTION 12 — COLONNE DB_SEGNALI (A→AG)</h2>
+<p>A=Data(dd/mm/yyyy) | B=Sessione | C=Ippodromo | D=Disciplina(TR/GL) | E=Corsa(C1..) | F=Cavallo(N.+NOME) | G=QP_Bet365 | H=QV_Bet365 | I=QV/QP | J=FasciaQ | K=FasciaXQ | L=Pt.GG | M=LogIndice | N=Pt.Q | O=Pt.XQ | P=SCORE | Q=Montepremi€ | R=TipoCorsa | S=Partenti | T=QF_t1 | U=Mp_t1 | V=FasciaQV_t1 | W=FasciaM_t1 | X=FasciaQV_oggi | Y=FasciaM_oggi | Z=Mov | AA=Stake | AB=Esito(P/NP) | AC=Posizione | AD=QV_Vincitore | AE=FasciaQ_Vincitore | AF=P/L | AG=Piazzato(1/0)</p>
+
+<h2>SECTION 13 — OUTPUT FORMAT (ITALIANO)</h2>
+<pre>
+🏇 FASE 1 — PALINSESTO FILTRATO
+| Corsa | Ora | Mp€ | Part. | Flag | Stato |
+
+🏇 FASE 2 — SCORE [Corsa N] [Ippo]
+| N. Cavallo | Pt.GG | Log | Pt.Q | Pt.XQ | Score | QA |
+(ordinata per score decrescente, tutti i cavalli)
+
+🏇 FASE 3 — SEGNALE [Corsa N]
+✅ SEGNALE: [N. CAVALLO] | QP=[x] QV=[x] | Score=[x] | Fascia Q=[x] | XQ=[x] | Mov=[x] | Stake=[x]u
+oppure ❌ NO BET — [motivo]
+
+🏇 RIEPILOGO SESSIONE
+| Ora | Ippo | Corsa | N. Cavallo | Score | QP | Mov | Stake | Flag |
+Esposizione totale: [x]u
+</pre>
+
+<hr>
+<p><small>Sistema Ippico Trotto v2.4 — Bot Reference — April 2026</small></p>
+</body>
+</html>
