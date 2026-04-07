@@ -1,0 +1,342 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Tennis LBA Protocol v2.0 — Bot Reference</title>
+<style>
+  body { font-family: monospace; font-size: 14px; max-width: 900px; margin: 40px auto; padding: 0 20px; background: #fff; color: #111; line-height: 1.7; }
+  h1 { font-size: 18px; border-bottom: 2px solid #111; padding-bottom: 8px; }
+  h2 { font-size: 15px; border-bottom: 1px solid #ccc; padding-bottom: 4px; margin-top: 36px; }
+  h3 { font-size: 14px; margin-top: 24px; }
+  table { border-collapse: collapse; width: 100%; margin: 12px 0; }
+  td, th { border: 1px solid #aaa; padding: 6px 10px; text-align: left; }
+  th { background: #f0f0f0; }
+  pre { background: #f5f5f5; padding: 12px; white-space: pre-wrap; font-family: monospace; }
+  .rule { background: #fffbe6; border-left: 3px solid #f0c000; padding: 8px 12px; margin: 10px 0; }
+  .stop { background: #fff0f0; border-left: 3px solid #cc0000; padding: 8px 12px; margin: 10px 0; }
+  .note { background: #f0f8ff; border-left: 3px solid #0066cc; padding: 8px 12px; margin: 10px 0; }
+  .verdict { background: #f0fff0; border-left: 3px solid #00aa00; padding: 8px 12px; margin: 10px 0; }
+  ul { margin: 6px 0; padding-left: 20px; }
+  li { margin: 3px 0; }
+</style>
+</head>
+<body>
+
+<h1>TENNIS LBA PROTOCOL v2.0 — BOT REFERENCE PAGE</h1>
+<p><strong>Version:</strong> 2.0 — April 2026<br>
+<strong>Purpose:</strong> This page is loaded by an automated bot before analyzing tennis betting screenshots. Apply ALL rules below mechanically.</p>
+
+<h2>SECTION 0 — ABSOLUTE RULES (NEVER VIOLATE)</h2>
+<div class="stop">
+1. Read this document fully before starting any analysis.<br>
+2. Never interpret rules — follow them literally.<br>
+3. If data is missing → state it clearly, do not assume.<br>
+4. Recap Telegram and Tipstrr are generated ONLY for GIOCA decisions — never for NO BET.<br>
+5. Morfologia + Outlier are MANDATORY always.<br>
+6. OLS model is OPTIONAL — decision can be made without it.<br>
+7. FAV = player with LOWEST Pinnacle odds. Always. Never change this definition.
+</div>
+
+<h2>SECTION 1 — DATA SOURCES</h2>
+
+<p><strong>Source A: AsianOdds screenshot</strong> (mandatory)</p>
+<ul>
+  <li>Graph showing Pinnacle odds movement over time for both players</li>
+  <li>ALL BOOKMAKERS comparison table</li>
+  <li>Used for: morfologia classification + outlier detection</li>
+</ul>
+
+<p><strong>Source B: OLS dataset</strong> (optional)</p>
+<ul>
+  <li>Format: three numbers per row, e.g. <code>237 153 250</code></li>
+  <li>First number = subject odds → divide by 100 → 2.37</li>
+  <li>Second number = opponent odds → divide by 100 → 1.53</li>
+  <li>Third number = opponent rank → leave unchanged → 250</li>
+  <li>Rank > 1500 → replace with 1500 before ln()</li>
+  <li>Dataset is already filtered for surface → NEVER ask for surface confirmation</li>
+  <li>Minimum N: 8 observations. If N &lt; 8 → STOP, communicate before proceeding</li>
+</ul>
+
+<div class="rule">Workflow: morfologia + outlier can arrive before or after OLS dataset. Final decision requires morfologia + outlier. OLS adds weight but is not required.</div>
+
+<h2>SECTION 2 — KEY DEFINITIONS</h2>
+
+<ul>
+  <li><strong>FAV</strong> = player with lowest Pinnacle odds (always)</li>
+  <li><strong>UND</strong> = player with highest Pinnacle odds (always)</li>
+  <li><strong>HOME/AWAY</strong> = graphic convention only, not field advantage</li>
+  <li><strong>Esito in DB</strong> = always from FAV perspective: W = FAV wins, L = FAV loses</li>
+  <li><strong>Outl_UND</strong> = Pinnacle at maximum on UND side → sharp money on FAV → PRO FAV</li>
+  <li><strong>Outl_FAV</strong> = Pinnacle at maximum on FAV side → sharp money on UND → PRO UND</li>
+</ul>
+
+<h2>SECTION 3 — SIGNAL 1: MORFOLOGIA PINNACLE (mandatory)</h2>
+
+<p>Classify morfologia on the FAV (lowest Pinnacle odds). Read the FAV price graph shape over time.</p>
+
+<table>
+  <tr><th>Code</th><th>Shape</th><th>Empirical signal</th><th>Notes</th></tr>
+  <tr><td>D</td><td>Clean unidirectional descent</td><td>EV (check DB)</td><td>Update from DB</td></tr>
+  <tr><td>DC</td><td>Descent with cap</td><td>PRO UND</td><td>Do NOT classify as PRO FAV</td></tr>
+  <tr><td>S</td><td>Clean unidirectional rise</td><td>PRO UND (strong)</td><td>Most reliable signal available</td></tr>
+  <tr><td>SF</td><td>Rise with bottom</td><td>EV</td><td>Small sample</td></tr>
+  <tr><td>G</td><td>Hump (up then down)</td><td>PRO UND</td><td>Small sample</td></tr>
+  <tr><td>VD</td><td>V right (down then up)</td><td>EV</td><td>Small sample</td></tr>
+  <tr><td>VR</td><td>V inverted (up then down)</td><td>nd</td><td>No data</td></tr>
+  <tr><td>P</td><td>Flat</td><td>EV</td><td>Small sample</td></tr>
+  <tr><td>ST</td><td>Abrupt step</td><td>nd</td><td>No data</td></tr>
+</table>
+
+<div class="note">Always check updated empirical values in the Morfologia sheet of DB Excel before classifying. Apply empirical column only when N ≥ 5 for that morfologia type.</div>
+
+<h2>SECTION 4 — SIGNAL 2: OUTLIER PINNACLE (mandatory)</h2>
+
+<p>Check BOTH sides always. Two separate signals with opposite directions.</p>
+
+<p><strong>How to detect from AsianOdds ALL BOOKMAKERS table:</strong></p>
+<ol>
+  <li>Read Pinnacle odds for FAV and UND</li>
+  <li>Compare Pinnacle vs all other bookmakers on each side</li>
+  <li>Outlier threshold: Pinnacle ≥ second highest book on that side (even if equal)</li>
+</ol>
+
+<table>
+  <tr><th>Column</th><th>Condition</th><th>Interpretation</th><th>Signal</th></tr>
+  <tr><td>Outl_UND</td><td>Pinnacle highest on UND side</td><td>Pinnacle not afraid of UND exposure → sharp money on FAV</td><td>PRO FAV</td></tr>
+  <tr><td>Outl_FAV</td><td>Pinnacle highest on FAV side</td><td>Pinnacle not afraid of FAV exposure → sharp money on UND</td><td>PRO UND</td></tr>
+</table>
+
+<div class="stop">
+If Pinnacle is highest on BOTH sides simultaneously → both columns = nd (signals cancel out).<br>
+If absent on both sides → both columns = nd.
+</div>
+
+<h2>SECTION 5 — SIGNAL 3: OLS MODEL (optional)</h2>
+
+<h3>Pipeline — execute in exact order</h3>
+
+<p><strong>Step 1 — No-vig probability</strong></p>
+<pre>prob_subject = (1/q_subject) / (1/q_subject + 1/q_opponent)</pre>
+
+<p><strong>Step 2 — Log transformation</strong></p>
+<pre>x = ln(rank_opponent)   [rank >1500 → use 1500]
+y = ln(prob_subject)</pre>
+
+<p><strong>Step 3 — OLS regression</strong></p>
+<pre>x_mean = mean of all x values
+y_mean = mean of all y values
+a = SUM[(xi - x_mean)(yi - y_mean)] / SUM[(xi - x_mean)^2]
+b = y_mean - a * x_mean</pre>
+
+<p><strong>Step 4 — R²</strong></p>
+<pre>SS_res = SUM[(yi - ŷi)^2]   where ŷi = a*xi + b
+SS_tot = SUM[(yi - y_mean)^2]
+R² = 1 - SS_res / SS_tot</pre>
+
+<p><strong>Step 5 — Fair forecast</strong></p>
+<pre>ln(prob_forecast) = a * ln(rank_opponent_today) + b
+prob_forecast = exp(ln(prob_forecast))
+quota_fair_forecast = 1 / prob_forecast</pre>
+
+<p><strong>Step 6 — Δ%</strong></p>
+<pre>Δ% = (quota_fair_forecast - quota_Pinnacle_subject) / quota_Pinnacle_subject * 100</pre>
+<ul>
+  <li>Δ% positive → fair_forecast > Pinnacle → <strong>PRO subject</strong></li>
+  <li>Δ% negative → fair_forecast &lt; Pinnacle → <strong>PRO opponent</strong></li>
+</ul>
+
+<div class="stop">NEVER invert the signal rule. Apply mechanically always.</div>
+
+<p><strong>Step 7 — Extreme rank check</strong></p>
+<ul>
+  <li>If dataset contains rank very far from mean → verify R² with and without</li>
+  <li>Do NOT remove automatically → choose version with more stable R²</li>
+  <li>Always document which version is used</li>
+</ul>
+
+<h3>R² thresholds</h3>
+<table>
+  <tr><th>R²</th><th>Assessment</th></tr>
+  <tr><td>&lt; 0.3</td><td>Not operational</td></tr>
+  <tr><td>0.3 – 0.6</td><td>Acceptable — use with caution</td></tr>
+  <tr><td>0.6 – 0.8</td><td>Reliable</td></tr>
+  <tr><td>0.8 – 0.9</td><td>Solid</td></tr>
+  <tr><td>&gt; 0.9</td><td>Very solid</td></tr>
+  <tr><td>Negative</td><td>Not usable</td></tr>
+</table>
+
+<h3>Δ% thresholds</h3>
+<table>
+  <tr><th>Δ%</th><th>Fascia DB</th><th>Notes</th></tr>
+  <tr><td>&lt; 5%</td><td>sub</td><td>Weak signal</td></tr>
+  <tr><td>5–12%</td><td>debole</td><td>Only with R² ≥ 0.80 and strong flows</td></tr>
+  <tr><td>12–22%</td><td>mod</td><td>Operational with Pinnacle convergence</td></tr>
+  <tr><td>&gt; 22%</td><td>forte</td><td>Strong signal</td></tr>
+  <tr><td>R² neg / not calc.</td><td>non op</td><td>Not operational</td></tr>
+</table>
+
+<h2>SECTION 6 — DECISION TABLE (apply mechanically)</h2>
+
+<table>
+  <tr><th>Morfologia</th><th>Outl_UND</th><th>Outl_FAV</th><th>Modello</th><th>Decision</th></tr>
+  <tr><td>PRO FAV</td><td>SI</td><td>nd</td><td>PRO FAV or nd</td><td><strong>GIOCA FAV</strong></td></tr>
+  <tr><td>PRO FAV</td><td>SI</td><td>nd</td><td>PRO UND</td><td><strong>NO BET</strong> — divergence</td></tr>
+  <tr><td>PRO UND</td><td>nd</td><td>SI</td><td>PRO UND or nd</td><td><strong>GIOCA UND</strong></td></tr>
+  <tr><td>PRO UND</td><td>nd</td><td>SI</td><td>PRO FAV</td><td><strong>NO BET</strong> — divergence</td></tr>
+  <tr><td>PRO FAV</td><td>nd</td><td>nd</td><td>PRO FAV</td><td><strong>GIOCA FAV</strong> — morf+model only</td></tr>
+  <tr><td>PRO UND</td><td>nd</td><td>nd</td><td>PRO UND</td><td><strong>GIOCA UND</strong> — morf+model only</td></tr>
+  <tr><td>EV</td><td>SI</td><td>nd</td><td>any</td><td><strong>GIOCA FAV 0.5u</strong> — outlier only</td></tr>
+  <tr><td>EV</td><td>nd</td><td>SI</td><td>any</td><td><strong>GIOCA UND 0.5u</strong> — outlier only</td></tr>
+  <tr><td>EV</td><td>nd</td><td>nd</td><td>any</td><td><strong>NO BET</strong></td></tr>
+  <tr><td>PRO FAV</td><td>nd</td><td>SI</td><td>any</td><td><strong>NO BET</strong> — morf/outlier conflict</td></tr>
+  <tr><td>PRO UND</td><td>SI</td><td>nd</td><td>any</td><td><strong>NO BET</strong> — morf/outlier conflict</td></tr>
+  <tr><td>ambiguous/EV</td><td>nd</td><td>nd</td><td>any</td><td><strong>NO BET</strong></td></tr>
+</table>
+
+<div class="stop">
+DC morfologia → empirically PRO UND → do NOT classify as PRO FAV.<br>
+S morfologia → empirically PRO UND strong → highest reliability.<br>
+If total convergence fails 3+ times → flag as critical pattern.
+</div>
+
+<h2>SECTION 7 — STAKE SIZING</h2>
+
+<table>
+  <tr><th>Condition</th><th>Stake</th></tr>
+  <tr><td>Morfologia netta + outlier convergenti (no model)</td><td>0.5u</td></tr>
+  <tr><td>Morfologia + outlier + model acceptable convergenti</td><td>0.5u</td></tr>
+  <tr><td>Morfologia + outlier + model reliable convergenti</td><td>1u</td></tr>
+  <tr><td>Morfologia + outlier + model solid/very solid convergenti</td><td>1u–2u</td></tr>
+</table>
+
+<h2>SECTION 8 — DATASET RULES (OLS model)</h2>
+
+<ol>
+  <li>Minimum N: 8 observations</li>
+  <li>Window: last 12 months. If N &lt; 8 → extend to 18 months</li>
+  <li>Duplicates: same rank → remove oldest</li>
+  <li>Extreme ranks: do NOT remove automatically → check R² with and without</li>
+  <li>Rank > 1500: replace with 1500 before ln()</li>
+  <li>Exclude qualifying if match is main draw and vice versa</li>
+  <li>Hard floor: odds below 1.80 excluded (override documented case by case)</li>
+  <li>Rank filter today ±200. If N &lt; 8 → ±400 → if still &lt; 8 → all data</li>
+  <li>If N &lt; 8 with all data → STOP before proceeding</li>
+  <li>Cherry picking forbidden: do not substitute data to improve R²</li>
+</ol>
+
+<h2>SECTION 9 — POST-MATCH UPDATE PROCEDURE</h2>
+
+<p>When result is provided, immediately generate the DB row in this format:</p>
+<pre># | Data | Torneo | Sup | FAV | UND | Q_FAV | Q_UND | Morf | Outl_UND | Outl_FAV | R2 | Delta% | Fascia | Esito | Morf_OK | Outl_UND_OK | Outl_FAV_OK | Mod_OK</pre>
+
+<p><strong>OK column logic:</strong></p>
+<ul>
+  <li>Esito W (FAV wins) → Morf_OK / Outl_UND_OK / Mod_OK = SI (if signal PRO FAV), NO (if signal PRO UND), nd (if absent/EV)</li>
+  <li>Esito L (FAV loses) → inverse</li>
+  <li>Outl_FAV_OK: Esito L = SI (outlier pointed UND, UND wins), Esito W = NO</li>
+  <li>Column = nd if signal absent or EV</li>
+</ul>
+
+<div class="rule">Do NOT wait for Maurizio to ask — generate automatically after every result received.</div>
+
+<h2>SECTION 10 — OUTPUT FORMAT (BOT RESPONSE IN ITALIAN)</h2>
+
+<p>Respond in Italian with this structure:</p>
+
+<pre>
+🎾 [Torneo] — [Round] | [Superficie]
+🗓 [Data] | [Orario]
+[Giocatore FAV] 🏳️ vs [Giocatore UND] 🏳️
+
+📊 FONTE: [AsianOdds / OLS dataset / Entrambe]
+
+👤 FAV: [nome] @ [quota Pinnacle]
+👤 UND: [nome] @ [quota Pinnacle]
+
+📈 MORFOLOGIA (sul FAV):
+• Tipo: [D/DC/S/SF/G/VD/VR/P/ST]
+• Forma: [descrizione del movimento grafico]
+• Segnale empirico: [PRO FAV / PRO UND / EV / nd]
+
+🔍 OUTLIER PINNACLE:
+• Outl_UND: [SI / nd] → [interpretazione]
+• Outl_FAV: [SI / nd] → [interpretazione]
+
+📐 MODELLO OLS (se disponibile):
+• N osservazioni: [N]
+• R²: [valore] → [valutazione]
+• Fair forecast: [quota]
+• Δ%: [valore]% → Fascia: [fascia] → Segnale: [PRO FAV / PRO UND]
+
+⚡ CONVERGENZA SEGNALI:
+• Morfologia: [segnale]
+• Outl_UND: [SI/nd]
+• Outl_FAV: [SI/nd]
+• Modello: [segnale / nd]
+
+🎯 DECISIONE: [GIOCA FAV / GIOCA UND / NO BET]
+📦 Stake: [X.XXu]
+</pre>
+
+<h2>SECTION 11 — VERDICT FINALE</h2>
+
+<p>ALWAYS append this block at the very end of every response. Mandatory.</p>
+
+<pre>
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎾 VERDICT — [FAV] vs [UND]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+🎯 DECISIONE: [GIOCA FAV / GIOCA UND / NO BET]
+👤 Giocatore: [nome] | Quota ~[X.XX]
+📦 Stake: [X.XXu]
+
+✅ Convergenze:
+  • Morfologia [tipo]: [PRO FAV / PRO UND / EV]
+  • Outl_UND: [SI / nd]
+  • Outl_FAV: [SI / nd]
+  • Modello Δ%: [valore]% R²=[valore] → [segnale] / nd se assente
+
+⚠️ Conflitti: [Nessuno / descrizione]
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ GIOCA   /   ❌ NO BET
+━━━━━━━━━━━━━━━━━━━━━━━━━━━
+</pre>
+
+<h2>SECTION 12 — TELEGRAM RECAP TEMPLATE (only for GIOCA decisions)</h2>
+
+<pre>
+🎾 [TORNEO] — [ROUND] | [Superficie]
+🗓 [Data] | [Orario]
+[Giocatore FAV] 🏳️ vs [Giocatore UND] 🏳️
+
+[Narrativa sharp-oriented — NO R², NO regressione, NO forecast, NO dettagli tecnici]
+[Se gioca in nazione di appartenenza: "gioca sul territorio nazionale" o "in casa"]
+[Retail = "book retail", non "book meno efficienti"]
+[Non menzionare segnali ambigui]
+
+⭐ Flusso sharp: [★ basato su morfologia + outlier]
+⭐ Conferma modello: [★ basato su R² e Δ% — omettere riga se modello assente]
+⭐ Valore quota: [★ basato su Δ% — omettere riga se modello assente]
+⭐ Freschezza: [★ basato su recenza del movimento]
+
+🎯 [Giocatore] 🏳️ | Quota ~[X.XX]
+📦 Stake: [X]u
+</pre>
+
+<p><strong>Scala Valore quota (Δ% — solo se modello disponibile):</strong></p>
+<table>
+  <tr><th>Δ%</th><th>Stars</th></tr>
+  <tr><td>5–8%</td><td>★☆☆☆☆</td></tr>
+  <tr><td>8–12%</td><td>★★☆☆☆</td></tr>
+  <tr><td>12–17%</td><td>★★★☆☆</td></tr>
+  <tr><td>17–22%</td><td>★★★★☆</td></tr>
+  <tr><td>&gt;22%</td><td>★★★★★</td></tr>
+  <tr><td>Modello assente</td><td>nd — omettere riga</td></tr>
+</table>
+
+<hr>
+<p><small>Tennis LBA Protocol v2.0 — Bot Reference Page — April 2026</small></p>
+
+</body>
+</html>
